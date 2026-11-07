@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-label="Front-load washing machine illustration">
+  <rect width="480" height="480" fill="#e6f3f5"/>
+  <rect x="110" y="60" width="260" height="350" rx="16" fill="#fff" stroke="#0b5563" stroke-width="6"/>
+  <line x1="110" y1="125" x2="370" y2="125" stroke="#0b5563" stroke-width="4"/>
+  <rect x="128" y="80" width="80" height="28" rx="6" fill="#e3e8eb"/>
+  <rect x="222" y="84" width="60" height="20" rx="4" fill="#0b5563"/>
+  <circle cx="330" cy="94" r="17" fill="#fff" stroke="#0b5563" stroke-width="4"/>
+  <circle cx="240" cy="265" r="102" fill="#f7f8f9" stroke="#0b5563" stroke-width="6"/>
+  <circle cx="240" cy="265" r="76" fill="#bfe3ea" stroke="#0b5563" stroke-width="4"/>
+  <path d="M170 278c24-22 46 16 70 0s46-18 70 0v22a76 76 0 0 1-140 0z" fill="#0b5563" opacity=".3"/>
+  <rect x="132" y="424" width="44" height="10" rx="3" fill="#073b46" transform="translate(0 -14)"/>
+  <rect x="304" y="424" width="44" height="10" rx="3" fill="#073b46" transform="translate(0 -14)"/>
+</svg>

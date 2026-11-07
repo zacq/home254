@@ -1,0 +1,11 @@
+import Link from "next/link";
+
+export default function SiteNotFound() {
+  return (
+    <div className="container-x py-16 text-center">
+      <h1 className="text-2xl font-extrabold text-brand-dark">We can&apos;t find that page</h1>
+      <p className="mt-2 text-slate-700">The machine may have sold out or moved. Try the search box above, or browse our range.</p>
+      <Link href="/washing-machines" className="btn btn-primary mt-4">Browse washing machines</Link>
+    </div>
+  );
+}

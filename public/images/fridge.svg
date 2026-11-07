@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-label="Fridge illustration">
+  <rect width="480" height="480" fill="#e6f3f5"/>
+  <rect x="140" y="40" width="200" height="390" rx="16" fill="#fff" stroke="#0b5563" stroke-width="6"/>
+  <line x1="140" y1="170" x2="340" y2="170" stroke="#0b5563" stroke-width="5"/>
+  <rect x="164" y="104" width="10" height="46" rx="5" fill="#0b5563"/>
+  <rect x="164" y="192" width="10" height="84" rx="5" fill="#0b5563"/>
+</svg>

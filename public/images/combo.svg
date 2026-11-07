@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-label="Washer-dryer combo illustration">
+  <rect width="480" height="480" fill="#e6f3f5"/>
+  <rect x="110" y="60" width="260" height="350" rx="16" fill="#d8dfe3" stroke="#073b46" stroke-width="6"/>
+  <line x1="110" y1="125" x2="370" y2="125" stroke="#073b46" stroke-width="4"/>
+  <rect x="128" y="80" width="110" height="28" rx="6" fill="#073b46"/>
+  <circle cx="330" cy="94" r="17" fill="#fff" stroke="#073b46" stroke-width="4"/>
+  <circle cx="240" cy="265" r="102" fill="#2c3e47" stroke="#073b46" stroke-width="6"/>
+  <circle cx="240" cy="265" r="76" fill="#bfe3ea"/>
+  <g fill="none" stroke="#e8590c" stroke-width="7" stroke-linecap="round">
+    <path d="M205 300c-14-18 14-30 0-48s14-26 0-36"/>
+    <path d="M240 300c-14-18 14-30 0-48s14-26 0-36"/>
+    <path d="M275 300c-14-18 14-30 0-48s14-26 0-36"/>
+  </g>
+</svg>
