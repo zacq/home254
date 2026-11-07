@@ -18,6 +18,7 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
         <h1 className="text-2xl font-extrabold text-brand-dark">Products</h1>
         <Link href="/admin/products/new" className="btn btn-primary ml-auto">+ Add product</Link>
         <Link href="/admin/products/import" className="btn btn-outline">Import CSV</Link>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- file download, not a page */}
         <a href="/api/admin/export/products" className="btn btn-outline">Export CSV</a>
       </div>
       {sp.saved && <p role="status" className="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-900">✓ Saved</p>}

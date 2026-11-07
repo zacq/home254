@@ -40,6 +40,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only readable after hydration
       if (raw) setItems(JSON.parse(raw));
     } catch {
       /* ignore */

@@ -2,7 +2,7 @@ import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { events, leads, orderItems, orders } from "@/db/schema";
-import { ksh } from "@/lib/format";
+import { hoursAgo, ksh } from "@/lib/format";
 import { guard } from "@/lib/guard";
 
 const PERIODS = [7, 30, 90];
@@ -33,7 +33,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   await guard("owner");
   const sp = await searchParams;
   const days = PERIODS.includes(Number(sp.days)) ? Number(sp.days) : 30;
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const since = hoursAgo(days * 24);
   const paid = sql`${orders.status} in ('confirmed','scheduled','delivered')`;
   const total = sql<number>`coalesce(sum(${orders.total}),0)::int`;
 

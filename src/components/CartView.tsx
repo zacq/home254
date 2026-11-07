@@ -17,6 +17,7 @@ export function useZone() {
   const [zoneId, setZoneId] = useState<number | null>(null);
   useEffect(() => {
     const z = Number(localStorage.getItem("zone"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only readable after hydration
     if (z) setZoneId(z);
   }, []);
   return [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveContent } from "@/app/admin/actions";
 import { ImageField } from "@/components/admin/ImageField";
@@ -36,9 +36,7 @@ export function ContentEditor({
   initial: Item | Item[];
 }) {
   const isList = Array.isArray(initial);
-  const nextKey = useRef(0);
-  const row = (v: Item) => ({ k: nextKey.current++, v });
-  const [rows, setRows] = useState(() => (Array.isArray(initial) ? initial : [initial]).map(row));
+  const [rows, setRows] = useState(() => (Array.isArray(initial) ? initial : [initial]).map((v, k) => ({ k, v })));
 
   const setField = (k: number, key: string, value: string) =>
     setRows((r) => r.map((x) => (x.k === k ? { ...x, v: { ...x.v, [key]: value } } : x)));
@@ -79,7 +77,7 @@ export function ContentEditor({
         </section>
       ))}
       {isList && (
-        <button type="button" className="btn btn-outline w-fit" onClick={() => setRows((r) => [...r, row(blank())])}>+ Add {itemLabel?.toLowerCase()}</button>
+        <button type="button" className="btn btn-outline w-fit" onClick={() => setRows((r) => [...r, { k: Math.max(-1, ...r.map((x) => x.k)) + 1, v: blank() }])}>+ Add {itemLabel?.toLowerCase()}</button>
       )}
       <div className="sticky bottom-0 -mx-3 bg-slate-100/95 p-3 sm:mx-0">
         <SaveButton />

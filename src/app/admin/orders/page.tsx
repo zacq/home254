@@ -15,6 +15,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-2xl font-extrabold text-brand-dark">Orders</h1>
         <Link href="/admin/orders/new" className="btn btn-primary ml-auto">+ Create order</Link>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- file download, not a page */}
         <a href="/api/admin/export/orders" className="btn btn-outline">Export CSV</a>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">

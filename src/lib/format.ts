@@ -73,6 +73,8 @@ export const isRemoteImage = (src: string) => /^https?:/i.test(src);
 
 export const MAX_COMPARE = 3;
 
+export const hoursAgo = (hours: number) => new Date(Date.now() - hours * 60 * 60 * 1000);
+
 export function sectionOf(category: string): Section {
   for (const [k, v] of Object.entries(SECTIONS)) {
     if (v.categories.includes(category)) return k as Section;

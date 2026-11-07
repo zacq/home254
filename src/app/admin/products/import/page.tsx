@@ -16,6 +16,7 @@ export default async function ImportProducts({ searchParams }: { searchParams: P
         </div>
       )}
       <div className="card grid gap-2 p-4 text-sm text-slate-700">
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- file download, not a page */}
         <p>Easiest way: <a className="font-semibold underline" href="/api/admin/export/products">export the current CSV</a>, edit it in Excel or Google Sheets, then upload it here.</p>
         <p>Rows are matched on <b>modelNumber</b>. A matching row is updated; a new one is added. Columns you leave out are not changed, so a file with only <code>modelNumber,priceKsh,stockQty</code> updates prices and stock.</p>
         <p>New products need <code>name</code>, <code>category</code> and <code>priceKsh</code>. Categories: washers, combos, dryers, fridges, microwaves, entry-washers. Separate multiple <code>features</code> or <code>images</code> with <code>|</code>.</p>

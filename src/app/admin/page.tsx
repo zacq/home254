@@ -2,7 +2,7 @@ import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { events, leads, notifications, orders, products } from "@/db/schema";
-import { ksh } from "@/lib/format";
+import { hoursAgo, ksh } from "@/lib/format";
 import { guard } from "@/lib/guard";
 import { customerMessage } from "@/lib/orders";
 import { ensureSeed } from "@/lib/seed";
@@ -54,8 +54,8 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
     );
   }
 
-  const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
-  const reminderDue = new Date(Date.now() - 1000 * 60 * 60 * 2);
+  const since = hoursAgo(24 * 30);
+  const reminderDue = hoursAgo(2);
   const [s, [newOrders], [awaiting], [newLeads], [rev], evs, outbox, unpaid] = await Promise.all([
     getSettings(),
     db.select({ n: count() }).from(orders).where(eq(orders.status, "new")),
