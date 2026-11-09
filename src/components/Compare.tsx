@@ -44,10 +44,24 @@ function useCompare() {
   };
 }
 
-export function CompareToggle({ id }: { id: number }) {
+export function CompareToggle({ id, compact }: { id: number; compact?: boolean }) {
   const { ids, toggle } = useCompare();
   const on = ids.includes(id);
   const full = !on && ids.length >= MAX_COMPARE;
+  if (compact)
+    return (
+      <button
+        type="button"
+        onClick={() => toggle(id)}
+        disabled={full}
+        aria-pressed={on}
+        title={full ? `Compare full (${MAX_COMPARE})` : "Compare"}
+        className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border-[1.5px] text-sm font-bold ${on ? "border-brand bg-brand text-white" : "border-slate-300 text-slate-600"} disabled:opacity-40`}
+      >
+        <span aria-hidden>⇄</span>
+        <span className="sr-only">{on ? "Remove from compare" : "Add to compare"}</span>
+      </button>
+    );
   return (
     <label className={`flex min-h-11 items-center gap-2 text-xs font-semibold ${full ? "text-slate-400" : "text-slate-700"}`}>
       <input type="checkbox" className="h-5 w-5" checked={on} disabled={full} onChange={() => toggle(id)} />

@@ -1,56 +1,72 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Product } from "@/db/schema";
-import { activePrice, capacityLabel, isRemoteImage, ksh, productImage, productPath, stockState } from "@/lib/format";
-import { productWaLink } from "@/lib/wa";
+import { Stars } from "@/components/Bits";
+import { CardCartButton } from "@/components/CardActions";
 import { CompareToggle } from "@/components/Compare";
-import { TrackedLink } from "@/components/TrackedLink";
+import { WishlistButton } from "@/components/Wishlist";
+import type { Product } from "@/db/schema";
+import { keySpecs } from "@/lib/catalog";
+import { isRemoteImage, ksh, MIN_REVIEWS_FOR_RATING, priceInfo, productImage, productPath, stockState } from "@/lib/format";
+import { getCardContext, productPoints } from "@/lib/queries";
 
-function keyBadge(p: Product) {
-  if (p.dryCapacityKg && p.washCapacityKg) return "Washer-dryer";
-  if (p.features.includes("SpaCare steam wash")) return "Steam wash";
-  if (p.features.includes("Heat pump")) return "Heat pump";
-  if (p.motor.includes("BLDC")) return "Inverter motor";
-  return p.type;
-}
-
-export function ProductCard({ p, whatsapp, priority }: { p: Product; whatsapp: string; priority?: boolean }) {
-  const { price, onOffer } = activePrice(p);
+// Brand header, stock badge, SALE badge, was/now price, PLUS X POINTS strip, cart and wishlist (PRD FR-15).
+export async function ProductCard({ p, priority }: { p: Product; priority?: boolean }) {
+  const ctx = await getCardContext();
+  const pi = priceInfo(p);
   const st = stockState(p);
+  const points = productPoints(p, ctx);
+  const rating = ctx.ratings.get(p.id);
+  const img = productImage(p);
+  const flash = pi.onOffer && p.offerQtyCap != null;
   return (
     <article className="card flex flex-col overflow-hidden transition hover:shadow-lg">
-      <Link href={productPath(p)} className="relative block bg-slate-100">
-        <Image
-          src={productImage(p)}
-          alt={`${p.name} — ${p.modelNumber}`}
-          width={480}
-          height={480}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="aspect-square w-full object-cover"
-          priority={priority}
-          unoptimized={isRemoteImage(productImage(p))}
-        />
-        <span className="absolute left-2 top-2 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-white">{keyBadge(p)}</span>
-        {onOffer && <span className="absolute right-2 top-2 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-white">{p.offerBadge || "Offer"}</span>}
-      </Link>
-      <div className="flex flex-1 flex-col gap-1.5 p-3">
+      <p className="flex items-center justify-between border-b border-slate-100 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide text-slate-600">
+        {p.brand}
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal ${st.cls}`}>{st.key === "out" ? "Out of stock" : st.key === "low" ? st.label : "In stock"}</span>
+      </p>
+      <div className="relative bg-slate-100">
+        <Link href={productPath(p)} className="block">
+          <Image
+            src={img}
+            alt={`${p.name} — ${p.modelNumber}`}
+            width={480}
+            height={480}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="aspect-square w-full object-cover"
+            priority={priority}
+            unoptimized={isRemoteImage(img)}
+          />
+        </Link>
+        {pi.was && (
+          <span className="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-xs font-extrabold text-white">
+            {flash ? "FLASH" : "SALE"} −{pi.pct}%
+          </span>
+        )}
+        <WishlistButton id={p.id} className="absolute right-2 top-2" />
+      </div>
+      <div className="flex flex-1 flex-col gap-1 p-3">
         <h3 className="text-sm font-bold leading-snug sm:text-base">
           <Link href={productPath(p)} className="hover:text-brand">{p.name}</Link>
         </h3>
-        <p className="text-xs text-slate-600">
-          {[capacityLabel(p), p.energyRating ? `Energy ${p.energyRating}` : "", p.spinRpm ? `${p.spinRpm} RPM` : ""].filter(Boolean).join(" · ")}
-        </p>
+        <p className="text-xs text-slate-500">Model {p.modelNumber}</p>
+        {keySpecs(p) && <p className="text-xs text-slate-600">{keySpecs(p)}</p>}
+        {rating && rating.n >= MIN_REVIEWS_FOR_RATING && (
+          <p className="text-xs"><Stars n={Math.round(rating.avg)} /> <span className="text-slate-500">({rating.n})</span></p>
+        )}
         <div className="mt-auto pt-1">
-          <p className="text-lg font-extrabold text-brand-dark">
-            {ksh(price)}
-            {onOffer && <span className="ml-2 text-sm font-normal text-slate-500 line-through">{ksh(p.priceKsh)}</span>}
-          </p>
-          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
+          {pi.was && <p className="text-xs text-slate-500 line-through">{ksh(pi.was)}</p>}
+          <p className="text-lg font-extrabold text-brand-dark">{ksh(pi.price)}</p>
         </div>
-        <TrackedLink href={productWaLink(whatsapp, p)} event="whatsapp_click" productId={p.id} external className="btn btn-wa mt-2 !text-sm">
-          💬 Order on WhatsApp
-        </TrackedLink>
-        {!!(p.washCapacityKg || p.dryCapacityKg) && <CompareToggle id={p.id} />}
+      </div>
+      {points > 0 && (
+        <p className="bg-amber-100 px-3 py-1 text-center text-xs font-extrabold tracking-wide text-amber-900">PLUS {points.toLocaleString()} POINTS</p>
+      )}
+      <div className="flex items-center gap-2 p-2">
+        <CardCartButton
+          disabled={p.stockQty <= 0}
+          item={{ productId: p.id, path: productPath(p), name: p.name, modelNumber: p.modelNumber, price: pi.price, image: img, max: p.stockQty, laundry: !!(p.washCapacityKg || p.dryCapacityKg) }}
+        />
+        <CompareToggle id={p.id} compact />
       </div>
     </article>
   );

@@ -12,7 +12,9 @@ export const metadata = {
   alternates: { canonical: "/technology" },
 };
 
-const machinesHref = (tag: string) => `/${tag === "Heat pump" ? "dryers" : "washing-machines"}?feature=${encodeURIComponent(tag)}`;
+const FILTER_FOR: Record<string, string> = { "SpaCare steam wash": "steam=1", "Inverter motor": "inverter=1", "Dryer function": "dryer=1" };
+const machinesHref = (tag: string) =>
+  tag === "Heat pump" ? "/washers/tumble-dryers?type=Heat-pump+dryer" : FILTER_FOR[tag] ? `/washers?${FILTER_FOR[tag]}` : `/search?q=${encodeURIComponent(tag)}`;
 
 export default async function TechnologyPage() {
   const [tech, all] = await Promise.all([getContent("tech"), allProducts()]);

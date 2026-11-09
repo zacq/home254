@@ -1,6 +1,8 @@
-# Premium Laundry & Home Appliances Store
+# NyumbaniAppliances
 
-Next.js 16 store and admin panel backed by Postgres. Built from the PRD in this folder.
+Next.js 16 store and admin panel backed by Postgres, built to `PRD – NyumbaniAppliances v2.md` (Phase 1): full-range catalogue with mega-menu, competitive pricing engine, Nyumbani Rewards (points, tiers, redemption), phone + one-time-code accounts, deals and flash sales, Best Price Promise and E-Warranty.
+
+Not connected yet (integrations deferred): M-Pesa STK Push, SMS (one-time codes wait in Admin → Messages → Sign-in codes), WhatsApp API, scheduled jobs (tiers are upgraded on delivery; points expire when the balance is next read).
 
 - Storefront: `/`
 - Admin (CMS): `/admin`
@@ -16,7 +18,7 @@ npm run db:push          # creates the tables
 npm run dev
 ```
 
-The first page view loads the sample catalogue and delivery zones. The first login at `/admin/login` creates the owner account from `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+The first page view loads the category tree, the sample catalogue, delivery zones and installation services. On a v1 database it also moves the laundry products into the new categories (`src/lib/seed.ts`, run once per seed version). The first login at `/admin/login` creates the owner account from `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
 
 ## Deploy to Netlify
 
@@ -43,7 +45,9 @@ The first page view loads the sample catalogue and delivery zones. The first log
 
 The admin dashboard warns about settings that are still placeholders. Also:
 
-- **Replace the sample catalogue.** `src/lib/seed.ts` holds sample data. Only the MWAFCV3310BDS price comes from the PRD; every other model number, price, dimension and warranty needs the owner's real figures.
+- **Replace the sample catalogue.** Products marked SAMPLE (model numbers like `HS-SMP001`) exist only so every category can be reviewed. Import the real catalogue by CSV, then use **Archive all samples** on the Products page. The PRD launch models (MDRH3110DS, RV1840CD7, RV1329C7T, RH80T2SP7RM, DV90CGC2A0ABNQ, MIC1D3615X, MFK1004SS, MACP1020) are real, but their stock is 0 and their cost prices are blank until entered.
+- **Enter cost prices and check margin floors** under Pricing and Categories. The margin-floor check only runs once a cost price is set.
+- **Set installation prices** under Delivery & install (the starting values are placeholders).
 - **Set the real M-Pesa Till** in Settings. Buyers pay whatever number is shown.
 - **Replace the illustrations** in `public/images` with real photos, using Admin > Content and Products.
 - **Confirm dealer status.** Review the dealer statement, warranty wording and legal pages before launch.
@@ -52,6 +56,8 @@ The admin dashboard warns about settings that are still placeholders. Also:
 
 | Role | Access |
 | --- | --- |
-| Owner | Everything, including settings, users, reports and audit log |
-| Sales | Orders and leads |
-| Content | Products, content, reviews and delivery zones |
+| Owner | Everything, including Rewards rules, points adjustments, settings, users, reports and audit log |
+| Pricing | Pricing engine, deals, promo codes, price-match approvals |
+| Sales | Orders, leads, customers, messages |
+| Content | Products, categories, content, reviews, delivery and installation |
+| Fulfilment | Orders (status, delivery slot, driver) and messages |

@@ -1,21 +1,29 @@
-import { eq } from "drizzle-orm";
+import { eq, isNotNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { CategorySpecFields } from "@/components/admin/CategorySpecFields";
 import { ImageField } from "@/components/admin/ImageField";
 import { db } from "@/db";
-import { products } from "@/db/schema";
-import { CATEGORY_LABEL, FEATURES, TYPES } from "@/lib/format";
+import { categories, products } from "@/db/schema";
+import { ksh } from "@/lib/format";
 import { guard } from "@/lib/guard";
+import { floorPrice, suggestedPrice } from "@/lib/pricing";
+import { marginFloorFor } from "@/lib/queries";
 import { saveProduct } from "../../actions";
 
 const day = (d: Date | null | undefined) => (d ? d.toISOString().slice(0, 10) : "");
+// datetime-local in Nairobi time (UTC+3).
+const local = (d: Date | null | undefined) => (d ? new Date(d.getTime() + 3 * 3_600_000).toISOString().slice(0, 16) : "");
 
 export default async function ProductForm({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
-  await guard("content");
+  await guard("content", "pricing");
   const { id } = await params;
   const sp = await searchParams;
   const isNew = id === "new";
   const [p] = isNew ? [undefined] : await db.select().from(products).where(eq(products.id, Number(id))).limit(1);
   if (!isNew && !p) notFound();
+  const extra = await db.select().from(categories).where(isNotNull(categories.parent));
+  const floorPct = p ? await marginFloorFor(p.category) : null;
+  const floor = p ? floorPrice(p.costKsh, floorPct) : null;
   const t = (k: string, label: string, v: string | number | null | undefined, extra: { type?: string; req?: boolean; hint?: string } = {}) => (
     <div>
       <label className="label" htmlFor={k}>{label}</label>
@@ -32,65 +40,47 @@ export default async function ProductForm({ params, searchParams }: { params: Pr
         <h2 className="font-bold sm:col-span-2">Basics</h2>
         {t("name", "Name", p?.name, { req: true })}
         {t("modelNumber", "Model number (unique)", p?.modelNumber, { req: true })}
-        {t("brand", "Brand", p?.brand ?? "MIKA")}
-        <div>
-          <label className="label" htmlFor="category">Category</label>
-          <select id="category" name="category" defaultValue={p?.category ?? "washers"} className="input">
-            {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label" htmlFor="type">Type</label>
-          <select id="type" name="type" defaultValue={p?.type ?? "Front-load"} className="input">
-            {TYPES.map((x) => <option key={x}>{x}</option>)}
-          </select>
-        </div>
+        {t("brand", "Brand", p?.brand ?? "MIKA", { hint: "e.g. MIKA, LG, Samsung, Hisense, Ramtons, Von" })}
         {t("colour", "Colour", p?.colour)}
-        <div className="flex gap-6 sm:col-span-2">
-          <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="featured" defaultChecked={p?.featured} className="h-5 w-5" /> Featured on homepage</label>
+        <div className="flex flex-wrap gap-6 sm:col-span-2">
+          <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="featured" defaultChecked={p?.featured} className="h-5 w-5" /> Featured</label>
           <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="archived" defaultChecked={p?.archived} className="h-5 w-5" /> Archived (hidden)</label>
+          <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="isSample" defaultChecked={p?.isSample} className="h-5 w-5" /> Sample listing (not a real product yet)</label>
         </div>
       </section>
+      <CategorySpecFields
+        catsub={p ? `${p.category}/${p.subcategory}` : ""}
+        type={p?.type ?? ""}
+        energyRating={p?.energyRating ?? ""}
+        specs={p?.specs ?? {}}
+        laundry={{ washCapacityKg: p?.washCapacityKg ?? null, dryCapacityKg: p?.dryCapacityKg ?? null, spinRpm: p?.spinRpm ?? null, motor: p?.motor ?? "Standard", features: p?.features ?? [] }}
+        extraSubs={extra.map((c) => ({ parent: c.parent!, slug: c.slug.split("/")[1], name: c.name }))}
+      />
       <section className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <h2 className="font-bold sm:col-span-2 lg:col-span-4">Price, offer & stock</h2>
-        {t("priceKsh", "Price (KSh)", p?.priceKsh, { type: "number", req: true })}
-        {t("offerPriceKsh", "Offer price (KSh)", p?.offerPriceKsh, { type: "number" })}
-        {t("offerStart", "Offer start", day(p?.offerStart), { type: "date" })}
-        {t("offerEnd", "Offer end", day(p?.offerEnd), { type: "date" })}
-        {t("offerBadge", "Offer badge text", p?.offerBadge, { hint: "e.g. Launch offer" })}
+        <h2 className="font-bold sm:col-span-2 lg:col-span-4">Pricing</h2>
+        {t("priceKsh", "Our price (KSh)", p?.priceKsh, { type: "number", req: true })}
+        {t("wasPriceKsh", "Was-price (KSh)", p?.wasPriceKsh, { type: "number", hint: "Only a genuine prior or recommended price" })}
+        {t("costKsh", "Cost price (KSh)", p?.costKsh, { type: "number", hint: floor ? `Margin floor: ${ksh(floor)} (${floorPct}%)` : "Needed for the margin-floor check" })}
+        <div />
+        {t("competitorPriceKsh", "Competitor price (KSh)", p?.competitorPriceKsh, { type: "number", hint: p?.competitorPriceKsh ? `Suggested: ${ksh(suggestedPrice(p.competitorPriceKsh))}` : "Reference price for the pricing engine" })}
+        {t("competitorWasKsh", "Competitor was-price (KSh)", p?.competitorWasKsh, { type: "number" })}
+        {t("competitorCheckedAt", "Competitor price checked on", day(p?.competitorCheckedAt), { type: "date" })}
+      </section>
+      <section className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="font-bold sm:col-span-2 lg:col-span-4">Sale / flash sale & stock</h2>
+        {t("offerPriceKsh", "Sale price (KSh)", p?.offerPriceKsh, { type: "number", hint: "Leave blank for no sale" })}
+        {t("offerStart", "Sale starts", local(p?.offerStart), { type: "datetime-local" })}
+        {t("offerEnd", "Sale ends", local(p?.offerEnd), { type: "datetime-local", hint: "Real end time: the countdown uses it and the price reverts automatically" })}
+        {t("offerQtyCap", "Flash-sale quantity cap", p?.offerQtyCap, { type: "number", hint: p?.offerQtyCap != null ? `${p.offerSold} sold so far` : "Set to make this a flash sale" })}
+        {t("offerBadge", "Sale label", p?.offerBadge, { hint: "e.g. Black Friday" })}
         {t("stockQty", "Stock quantity", p?.stockQty ?? 0, { type: "number" })}
-        {t("lowStockAt", "Low-stock threshold", p?.lowStockAt ?? 2, { type: "number" })}
+        {t("lowStockAt", "Low-stock alert at", p?.lowStockAt ?? 2, { type: "number" })}
       </section>
-      <section className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <h2 className="font-bold sm:col-span-2 lg:col-span-4">Specifications</h2>
-        {t("washCapacityKg", "Wash capacity (kg)", p?.washCapacityKg, { type: "number" })}
-        {t("dryCapacityKg", "Dry capacity (kg)", p?.dryCapacityKg, { type: "number" })}
-        {t("spinRpm", "Spin (RPM)", p?.spinRpm, { type: "number" })}
-        <div>
-          <label className="label" htmlFor="energyRating">Energy rating</label>
-          <select id="energyRating" name="energyRating" defaultValue={p?.energyRating ?? ""} className="input">
-            <option value="">—</option>
-            {["A+++", "A++", "A+", "A", "B", "C"].map((x) => <option key={x}>{x}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label" htmlFor="motor">Motor</label>
-          <select id="motor" name="motor" defaultValue={p?.motor ?? "Standard"} className="input">
-            <option>Brushless inverter (BLDC)</option>
-            <option>Standard</option>
-          </select>
-        </div>
+      <section className="card grid gap-3 p-4 sm:grid-cols-2">
+        <h2 className="font-bold sm:col-span-2">More details</h2>
         {t("dimensionsCm", "Dimensions W × D × H (cm)", p?.dimensionsCm)}
         {t("weightKg", "Weight (kg)", p?.weightKg, { type: "number" })}
-        <div className="sm:col-span-2 lg:col-span-4">{t("warranty", "Warranty", p?.warranty, { hint: "e.g. 10-year motor warranty + 2-year general warranty" })}</div>
-        <fieldset className="sm:col-span-2 lg:col-span-4">
-          <legend className="label">Features</legend>
-          <div className="flex flex-wrap gap-x-5">
-            {FEATURES.map((f) => (
-              <label key={f} className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" name="features" value={f} defaultChecked={p?.features.includes(f)} className="h-5 w-5" /> {f}</label>
-            ))}
-          </div>
-        </fieldset>
+        <div className="sm:col-span-2">{t("warranty", "Warranty", p?.warranty, { hint: "e.g. 2-year general warranty" })}</div>
       </section>
       <section className="card grid gap-3 p-4">
         <h2 className="font-bold">Content & media</h2>

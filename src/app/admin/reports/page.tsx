@@ -2,6 +2,7 @@ import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { events, leads, orderItems, orders } from "@/db/schema";
+import { catDef } from "@/lib/catalog";
 import { hoursAgo, ksh } from "@/lib/format";
 import { guard } from "@/lib/guard";
 
@@ -34,10 +35,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const days = PERIODS.includes(Number(sp.days)) ? Number(sp.days) : 30;
   const since = hoursAgo(days * 24);
-  const paid = sql`${orders.status} in ('confirmed','scheduled','delivered')`;
+  const paid = sql`${orders.status} in ('confirmed','scheduled','dispatched','delivered')`;
   const total = sql<number>`coalesce(sum(${orders.total}),0)::int`;
 
-  const [[summary], channels, top, leadTypes, leadSources, clicks] = await Promise.all([
+  const [[summary], channels, top, leadTypes, leadSources, clicks, byCat] = await Promise.all([
     db.select({ n: count(), revenue: total }).from(orders).where(and(gte(orders.createdAt, since), paid)),
     db.select({ source: orders.source, n: count(), revenue: total }).from(orders).where(and(gte(orders.createdAt, since), paid)).groupBy(orders.source).orderBy(desc(count())),
     db
@@ -51,7 +52,15 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     db.select({ type: leads.type, n: count() }).from(leads).where(gte(leads.createdAt, since)).groupBy(leads.type).orderBy(desc(count())),
     db.select({ page: leads.sourcePage, n: count() }).from(leads).where(gte(leads.createdAt, since)).groupBy(leads.sourcePage).orderBy(desc(count())).limit(10),
     db.select({ name: events.name, n: count() }).from(events).where(gte(events.createdAt, since)).groupBy(events.name).orderBy(desc(count())),
+    db
+      .select({ category: orderItems.category, revenue: sql<number>`coalesce(sum(${orderItems.unitPrice} * ${orderItems.qty}),0)::int`, qty: sql<number>`sum(${orderItems.qty})::int` })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(and(gte(orders.createdAt, since), paid))
+      .groupBy(orderItems.category)
+      .orderBy(desc(sql`sum(${orderItems.unitPrice} * ${orderItems.qty})`)),
   ]);
+  const productRevenue = byCat.reduce((n, c) => n + c.revenue, 0);
 
   const stats: [string, string | number][] = [
     ["Paid orders", summary.n],
@@ -77,6 +86,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
+        <Table
+          title="Sales by category (core five share)"
+          head={["Category", "Units", "Revenue", "Share"]}
+          rows={byCat.map((c) => [catDef(c.category ?? "")?.name ?? c.category ?? "Unknown", c.qty, ksh(c.revenue), productRevenue ? `${Math.round((c.revenue / productRevenue) * 100)}%` : "—"])}
+        />
         <Table title="Orders by channel" head={["Channel", "Orders", "Revenue"]} rows={channels.map((c) => [c.source, c.n, ksh(c.revenue)])} />
         <Table title="Top products" head={["Product", "Units"]} rows={top.map((t) => [`${t.name} (${t.model})`, t.qty])} />
         <Table title="Leads by type" head={["Type", "Leads"]} rows={leadTypes.map((l) => [l.type, l.n])} />

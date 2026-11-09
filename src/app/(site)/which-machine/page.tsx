@@ -21,10 +21,10 @@ export default async function WhichMachinePage() {
         <section className="prose-p">
           <Prose body={guide.body} />
           <div className="mt-4 flex flex-wrap gap-2 not-prose">
-            <Link href="/washing-machines" className="btn btn-brand">Washing machines</Link>
-            <Link href="/combos" className="btn btn-outline">Combos</Link>
-            <Link href="/dryers" className="btn btn-outline">Dryers</Link>
-            <Link href="/other-appliances" className="btn btn-outline">Entry-level range</Link>
+            <Link href="/washers/front-load" className="btn btn-brand">Front-load washers</Link>
+            <Link href="/washers/washer-dryers" className="btn btn-outline">Washer-dryers</Link>
+            <Link href="/washers/tumble-dryers" className="btn btn-outline">Dryers</Link>
+            <Link href="/washers/top-load" className="btn btn-outline">Top-load & twin-tub</Link>
           </div>
         </section>
       </div>

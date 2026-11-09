@@ -6,9 +6,11 @@ import { guard } from "@/lib/guard";
 import { resetUserTotp, saveUser } from "../actions";
 
 const ROLE_NOTE: Record<string, string> = {
-  owner: "Everything",
-  sales: "Orders and leads",
-  content: "Products, content, reviews and delivery zones",
+  owner: "Everything, incl. Rewards, settings and users",
+  pricing: "Pricing engine, deals, promo codes, price matches",
+  sales: "Orders, leads, customers, messages",
+  content: "Products, categories, content, reviews, delivery",
+  fulfilment: "Orders (status, delivery slot, driver) and messages",
 };
 
 function UserForm({ u, isSelf }: { u?: AdminUser; isSelf?: boolean }) {

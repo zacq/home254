@@ -12,7 +12,7 @@ const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
 
 export const MIN_PASSWORD_LENGTH = 10;
-export const ROLES = ["owner", "sales", "content"] as const;
+export const ROLES = ["owner", "pricing", "sales", "content", "fulfilment"] as const;
 export type Role = (typeof ROLES)[number];
 export type Admin = { id: number; username: string; name: string; role: Role };
 

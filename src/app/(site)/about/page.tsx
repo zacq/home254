@@ -3,7 +3,7 @@ import { Prose } from "@/components/Prose";
 import { getContent } from "@/lib/content";
 import { getSettings } from "@/lib/settings";
 
-export const metadata = { title: "About Us", description: "Who we are and how we sell premium laundry appliances in Kenya.", alternates: { canonical: "/about" } };
+export const metadata = { title: "About Us", description: "Who we are and how NyumbaniAppliances sells home appliances at the best price in Kenya.", alternates: { canonical: "/about" } };
 
 export default async function AboutPage() {
   const [s, page] = await Promise.all([getSettings(), getContent("about")]);

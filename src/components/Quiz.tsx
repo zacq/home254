@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { track } from "@/lib/analytics";
-import { ksh, sectionOf, waLink } from "@/lib/format";
+import { ksh, waLink } from "@/lib/format";
 
 const QUESTIONS = [
   { key: "household", q: "How many people live in your home?", options: [["1-2", "1–2 people"], ["3-4", "3–4 people"], ["5+", "5 or more"]] },
@@ -13,7 +13,7 @@ const QUESTIONS = [
   { key: "priority", q: "What matters most?", options: [["hygiene", "Hygiene (steam wash)"], ["running", "Low running cost"], ["quiet", "Quiet & long-lasting"], ["price", "Lowest price"]] },
 ] as const;
 
-type Result = { id: number; name: string; slug: string; category: string; modelNumber: string; shortBenefit: string; price: number; image: string | null };
+type Result = { id: number; name: string; path: string; modelNumber: string; shortBenefit: string; price: number; image: string | null };
 
 export function Quiz({ whatsapp }: { whatsapp: string }) {
   const [step, setStep] = useState(0);
@@ -83,7 +83,7 @@ export function Quiz({ whatsapp }: { whatsapp: string }) {
               <p className="text-sm text-slate-600">{r.shortBenefit}</p>
               <p className="mt-1 font-extrabold text-brand-dark">{ksh(r.price)}</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Link className="btn btn-primary !min-h-11 !text-sm" href={`/${sectionOf(r.category)}/${r.slug}`}>View & buy</Link>
+                <Link className="btn btn-primary !min-h-11 !text-sm" href={r.path}>View & buy</Link>
                 <a className="btn btn-wa !text-sm" target="_blank" rel="noopener noreferrer" onClick={() => track("whatsapp_click", { productId: r.id })} href={waLink(whatsapp, `Hi, I'm interested in the ${r.name} (${r.modelNumber}) at ${ksh(r.price)}. Is it available for delivery to [area]?`)}>💬 WhatsApp</a>
               </div>
             </div>

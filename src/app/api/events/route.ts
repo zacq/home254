@@ -13,6 +13,16 @@ const ALLOWED = new Set([
   "quiz_complete",
   "booking_submit",
   "financing_submit",
+  "view_item_list",
+  "add_to_wishlist",
+  "rewards_signup",
+  "points_redeemed",
+  "nudge_shown",
+  "nudge_accepted",
+  "mega_menu_open",
+  "filter_used",
+  "price_match_request",
+  "review_submitted",
 ]);
 
 export async function POST(req: Request) {

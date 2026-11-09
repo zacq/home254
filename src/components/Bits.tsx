@@ -1,5 +1,28 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Review } from "@/db/schema";
+import { jsonLd } from "@/lib/format";
+
+// Visible breadcrumbs plus BreadcrumbList structured data (PRD FR-12, NF-11).
+export function Breadcrumbs({ items }: { items: [string, string][] }) {
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map(([name, href], i) => ({ "@type": "ListItem", position: i + 1, name, item: `${site}${href}` })),
+  };
+  return (
+    <nav aria-label="Breadcrumb" className="mb-3 text-xs text-slate-600">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(ld) }} />
+      {items.map(([name, href], i) => (
+        <span key={href}>
+          {i > 0 && " / "}
+          {i < items.length - 1 ? <Link href={href} className="underline">{name}</Link> : <span aria-current="page">{name}</span>}
+        </span>
+      ))}
+    </nav>
+  );
+}
 
 export function TrustStrip({ items }: { items: Record<string, string>[] }) {
   return (
@@ -41,7 +64,9 @@ export function ReviewCards({ reviews }: { reviews: Review[] }) {
             <figcaption className="mt-2 text-xs font-semibold text-slate-600">
               {r.name}
               {r.location ? `, ${r.location}` : ""}
+              {r.verified && <span className="ml-1 text-emerald-700">✔ Verified buyer</span>}
             </figcaption>
+            {r.reply && <p className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600"><b>Reply from the store:</b> {r.reply}</p>}
           </div>
         </figure>
       ))}

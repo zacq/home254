@@ -4,9 +4,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: { default: "Premium Washing Machines & Laundry Appliances Kenya", template: "%s" },
+  title: { default: "NyumbaniAppliances | TVs, Fridges, Washers & Cookers at the Best Price in Kenya", template: "%s | NyumbaniAppliances" },
   description:
-    "Premium MIKA front-load washers, washer-dryer combos and heat-pump dryers in Kenya. Free delivery & installation in zones, M-Pesa and Pay on Delivery.",
+    "Shop TVs, audio, fridges, washing machines, cookers and home appliances in Kenya at or below the market price. Earn Rewards points on every purchase. M-Pesa and Pay on Delivery.",
+  applicationName: "NyumbaniAppliances",
 };
 
 export const viewport: Viewport = { themeColor: "#0b5563", width: "device-width", initialScale: 1 };

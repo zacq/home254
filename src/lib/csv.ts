@@ -34,13 +34,13 @@ export function parseCsv(text: string): Record<string, string>[] {
   return body.map((r) => Object.fromEntries(cols.map((c, i) => [c, (r[i] ?? "").trim()])));
 }
 
-const REQUIRED_TEXT = ["name", "brand", "category", "type", "motor", "warranty", "shortBenefit", "description"];
+const REQUIRED_TEXT = ["name", "brand", "category", "subcategory", "type", "motor", "warranty", "shortBenefit", "description"];
 const OPTIONAL_TEXT = ["energyRating", "offerBadge", "colour", "dimensionsCm", "videoUrl", "manualPdf", "seoTitle", "metaDescription"];
 const REQUIRED_INT = ["priceKsh", "stockQty", "lowStockAt", "popularity"];
-const OPTIONAL_INT = ["washCapacityKg", "dryCapacityKg", "spinRpm", "offerPriceKsh", "weightKg"];
-const BOOLS = ["featured", "archived"];
+const OPTIONAL_INT = ["washCapacityKg", "dryCapacityKg", "spinRpm", "offerPriceKsh", "weightKg", "wasPriceKsh", "costKsh", "competitorPriceKsh", "competitorWasKsh", "offerQtyCap"];
+const BOOLS = ["featured", "archived", "isSample"];
 const LISTS = ["features", "images"];
-const DATES = ["offerStart", "offerEnd"];
+const DATES = ["offerStart", "offerEnd", "competitorCheckedAt"];
 
 const toInt = (v: string) => {
   const n = Number(v.replace(/,/g, ""));
@@ -61,5 +61,17 @@ export function productFieldsFromCsv(r: Record<string, string>) {
     const d = r[k] ? new Date(r[k]) : null;
     out[k] = d && !Number.isNaN(d.getTime()) ? d : null;
   }
+  // Category specs as JSON, e.g. {"screenSize":"55","resolution":"4K UHD"}; or one column per spec as spec.screenSize.
+  const specs: Record<string, string> = {};
+  if (r.specs) {
+    try {
+      const parsed = JSON.parse(r.specs);
+      if (parsed && typeof parsed === "object") for (const [k, v] of Object.entries(parsed)) if (v != null && v !== "") specs[k] = String(v);
+    } catch {
+      /* ignore malformed specs */
+    }
+  }
+  for (const [k, v] of Object.entries(r)) if (k.startsWith("spec.") && v) specs[k.slice(5)] = v;
+  if ("specs" in r || Object.keys(r).some((k) => k.startsWith("spec."))) out.specs = specs;
   return out;
 }

@@ -4,7 +4,16 @@ import { usePathname } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { track } from "@/lib/analytics";
 
-type Field = "email" | "date" | "slot" | "plan" | "employment" | "message" | "product";
+type Field = "email" | "date" | "slot" | "plan" | "employment" | "message" | "product" | "competitor" | "advertisedPrice" | "link" | "orderRef" | "serial" | "purchaseDate" | "issue";
+
+const TEXT_FIELDS: Partial<Record<Field, { label: string; type?: string; required?: boolean; placeholder?: string }>> = {
+  competitor: { label: "Retailer with the lower price", required: true },
+  advertisedPrice: { label: "Advertised price (KSh)", type: "number", required: true },
+  link: { label: "Link to the advertised price (or send a photo on WhatsApp)", type: "url", placeholder: "https://" },
+  orderRef: { label: "Order number (if bought online)", placeholder: "ORD-2026-00123" },
+  serial: { label: "Serial number", placeholder: "On the sticker at the back" },
+  purchaseDate: { label: "Purchase date", type: "date" },
+};
 
 export function LeadForm({
   type,
@@ -17,14 +26,14 @@ export function LeadForm({
   event,
   consentText = "I agree to be contacted about this enquiry. My details are handled under our privacy policy.",
 }: {
-  type: "booking" | "financing" | "contact" | "notify";
+  type: "booking" | "financing" | "contact" | "notify" | "price_match" | "warranty" | "service";
   fields: Field[];
   productId?: number;
   productName?: string;
   productOptions?: { id: number; name: string }[];
   submitLabel?: string;
   successMessage?: string;
-  event?: "booking_submit" | "financing_submit";
+  event?: "booking_submit" | "financing_submit" | "price_match_request";
   consentText?: string;
 }) {
   const path = usePathname();
@@ -89,9 +98,9 @@ export function LeadForm({
       )}
       {has("product") && (
         <div>
-          <label className="label" htmlFor={`${type}-prod`}>Product of interest</label>
+          <label className="label" htmlFor={`${type}-prod`}>{type === "booking" || type === "financing" ? "Product of interest" : "Product"}</label>
           <select id={`${type}-prod`} name="productSel" className="input" defaultValue="">
-            <option value="">Not sure yet</option>
+            <option value="">{type === "price_match" ? "Choose the product…" : "Not sure yet"}</option>
             {productOptions?.map((o) => (
               <option key={o.id} value={o.id}>{o.name}</option>
             ))}
@@ -140,6 +149,21 @@ export function LeadForm({
               </select>
             </div>
           )}
+        </div>
+      )}
+      {(Object.keys(TEXT_FIELDS) as Field[]).filter(has).map((f) => {
+        const d = TEXT_FIELDS[f]!;
+        return (
+          <div key={f}>
+            <label className="label" htmlFor={`${type}-${f}`}>{d.label}</label>
+            <input id={`${type}-${f}`} name={f} type={d.type ?? "text"} inputMode={d.type === "number" ? "numeric" : undefined} required={d.required} placeholder={d.placeholder} className="input" />
+          </div>
+        );
+      })}
+      {has("issue") && (
+        <div>
+          <label className="label" htmlFor={`${type}-issue`}>What is the problem?</label>
+          <textarea id={`${type}-issue`} name="issue" rows={3} required className="input" />
         </div>
       )}
       {has("message") && (

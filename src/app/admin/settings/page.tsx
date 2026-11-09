@@ -4,8 +4,7 @@ import { saveSettings } from "../actions";
 
 const FIELDS: [string, string, string?][] = [
   ["storeName", "Store name"],
-  ["tagline", "Tagline"],
-  ["announcement", "Top announcement bar"],
+  ["tagline", "Tagline (under the logo)"],
   ["whatsapp", "WhatsApp number (international, no +)", "e.g. 254712345678"],
   ["phoneDisplay", "Phone (display)"],
   ["phoneTel", "Phone (tel link)", "e.g. +254712345678"],
@@ -25,6 +24,7 @@ const FIELDS: [string, string, string?][] = [
   ["instagram", "Instagram URL"],
   ["tiktok", "TikTok URL"],
   ["facebook", "Facebook URL"],
+  ["youtube", "YouTube URL"],
 ];
 
 export default async function AdminSettings({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
@@ -34,6 +34,7 @@ export default async function AdminSettings({ searchParams }: { searchParams: Pr
     <form action={saveSettings} className="card mx-auto grid max-w-2xl gap-3 p-4">
       <h1 className="text-2xl font-extrabold text-brand-dark">Store settings</h1>
       {sp.saved && <p role="status" className="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-900">✓ Saved</p>}
+      <p className="text-sm text-slate-600">The promo strip, hero slides and store branches are under Content. Rewards rules are under Rewards.</p>
       {FIELDS.map(([k, l, h]) => (
         <div key={k}>
           <label className="label" htmlFor={k}>{l}</label>

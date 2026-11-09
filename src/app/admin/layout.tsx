@@ -6,19 +6,26 @@ import { logout } from "./actions";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin", robots: { index: false, follow: false } };
 
+const ALL: Role[] = ["owner", "pricing", "sales", "content", "fulfilment"];
 const LINKS: [string, string, Role[]][] = [
-  ["/admin", "Dashboard", ["owner", "sales", "content"]],
-  ["/admin/orders", "Orders", ["owner", "sales"]],
-  ["/admin/leads", "Leads", ["owner", "sales"]],
-  ["/admin/products", "Products", ["owner", "content"]],
+  ["/admin", "Dashboard", ALL],
+  ["/admin/orders", "Orders", ["owner", "sales", "fulfilment"]],
+  ["/admin/messages", "Messages", ["owner", "sales", "fulfilment"]],
+  ["/admin/leads", "Leads", ["owner", "sales", "pricing"]],
+  ["/admin/customers", "Customers", ["owner", "sales"]],
+  ["/admin/products", "Products", ["owner", "content", "pricing"]],
+  ["/admin/categories", "Categories", ["owner", "content"]],
+  ["/admin/pricing", "Pricing", ["owner", "pricing"]],
+  ["/admin/deals", "Deals & codes", ["owner", "pricing"]],
+  ["/admin/rewards", "Rewards", ["owner"]],
   ["/admin/content", "Content", ["owner", "content"]],
   ["/admin/reviews", "Reviews", ["owner", "content"]],
-  ["/admin/zones", "Delivery zones", ["owner", "content"]],
+  ["/admin/zones", "Delivery & install", ["owner", "content"]],
   ["/admin/reports", "Reports", ["owner"]],
   ["/admin/settings", "Settings", ["owner"]],
   ["/admin/users", "Users", ["owner"]],
   ["/admin/audit", "Audit log", ["owner"]],
-  ["/admin/account", "My account", ["owner", "sales", "content"]],
+  ["/admin/account", "My account", ALL],
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

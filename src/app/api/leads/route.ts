@@ -1,18 +1,13 @@
 import { db } from "@/db";
 import { leads, notifications } from "@/db/schema";
 import { normalisePhone } from "@/lib/format";
+import { LEAD_LABEL, LEAD_TYPES } from "@/lib/leads";
 import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-const TYPES = ["booking", "financing", "contact", "notify", "quiz"] as const;
-const LABEL: Record<string, string> = {
-  booking: "Showroom booking",
-  financing: "Instalment enquiry",
-  contact: "Enquiry",
-  notify: "Back-in-stock request",
-  quiz: "Quiz result request",
-};
+const TYPES = LEAD_TYPES;
+const LABEL = LEAD_LABEL;
 
 export async function POST(req: Request) {
   let b: Record<string, unknown>;
@@ -36,7 +31,10 @@ export async function POST(req: Request) {
     return Response.json({ ok: false, error: "Please tick the consent box so we can contact you." }, { status: 400 });
 
   const details: Record<string, string> = {};
-  for (const k of ["message", "date", "slot", "plan", "employment", "answers"]) {
+  if (type === "price_match" && !(Number(b.productId) > 0 && str("advertisedPrice"))) {
+    return Response.json({ ok: false, error: "Choose the product and enter the advertised price." }, { status: 400 });
+  }
+  for (const k of ["message", "date", "slot", "plan", "employment", "answers", "competitor", "advertisedPrice", "link", "orderRef", "serial", "purchaseDate", "issue"]) {
     const v = str(k, 1000);
     if (v) details[k] = v;
   }

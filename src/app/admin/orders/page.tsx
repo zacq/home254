@@ -7,7 +7,7 @@ import { guard } from "@/lib/guard";
 import { ORDER_STATUSES, statusLabel } from "@/lib/orders";
 
 export default async function AdminOrders({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  await guard("sales");
+  await guard("sales", "fulfilment");
   const { status } = await searchParams;
   const rows = await (status ? db.select().from(orders).where(eq(orders.status, status)) : db.select().from(orders)).orderBy(desc(orders.createdAt)).limit(200);
   return (

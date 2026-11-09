@@ -3,8 +3,8 @@ import { db } from "@/db";
 import { settings } from "@/db/schema";
 
 export const SETTING_DEFAULTS = {
-  storeName: "Wash & Co. Appliances",
-  tagline: "Premium laundry appliances, explained and delivered.",
+  storeName: "NyumbaniAppliances",
+  tagline: "Every appliance for your home, at the best price.",
   whatsapp: "254700000000",
   phoneDisplay: "+254 700 000 000",
   phoneTel: "+254700000000",
@@ -20,12 +20,27 @@ export const SETTING_DEFAULTS = {
   warrantyPct: "5",
   pedestalPrice: "0",
   financingRates: "",
-  announcement: "Price confirmed on WhatsApp · Free delivery & installation in selected zones",
   dealerStatement:
     "We are an independent appliance retailer. Brand names are used to identify the products we sell. Warranty terms are stated precisely on every product page.",
   instagram: "https://instagram.com/",
   tiktok: "https://tiktok.com/",
   facebook: "https://facebook.com/",
+  youtube: "https://youtube.com/",
+  // Rewards (PRD section 9). All values are owner-editable defaults.
+  rewardsName: "Nyumbani Rewards",
+  earnBronze: "1",
+  earnSilver: "1.25",
+  earnGold: "1.5",
+  earnPlatinum: "2",
+  tierSilver: "100000",
+  tierGold: "250000",
+  tierPlatinum: "500000",
+  signupBonus: "200",
+  warrantyBonus: "100",
+  crossSellBonus: "150",
+  redeemMin: "200",
+  redeemCapPct: "10",
+  expiryMonths: "12",
 } as const;
 
 export type Settings = Record<keyof typeof SETTING_DEFAULTS, string>;

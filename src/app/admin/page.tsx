@@ -1,10 +1,12 @@
-import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
-import { events, leads, notifications, orders, products } from "@/db/schema";
+import { events, leads, notifications, orders, products, reviews } from "@/db/schema";
 import { hoursAgo, ksh } from "@/lib/format";
 import { guard } from "@/lib/guard";
-import { customerMessage } from "@/lib/orders";
+import { customerMessage, PAID_STATUSES } from "@/lib/orders";
+import { priceCheck } from "@/lib/pricing";
+import { getCategoryTree } from "@/lib/queries";
 import { ensureSeed } from "@/lib/seed";
 import { getSettings, SETTING_DEFAULTS, waLink } from "@/lib/settings";
 
@@ -40,14 +42,30 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   const lowStock = await db.select().from(products).where(and(eq(products.archived, false), sql`${products.stockQty} <= ${products.lowStockAt}`)).limit(10);
   const denied = sp.denied && <p role="alert" className="rounded-lg bg-amber-50 p-3 font-semibold text-amber-900">Your role does not include that page.</p>;
 
-  if (admin.role === "content") {
+  const [samples] = await db.select({ n: count() }).from(products).where(and(eq(products.isSample, true), eq(products.archived, false)));
+  const sampleNote = samples.n > 0 && (
+    <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+      <b>{samples.n} sample products</b> are live for review. Replace them with the real catalogue before launch. <Link className="font-semibold underline" href="/admin/products">Products</Link>
+    </p>
+  );
+
+  if (admin.role === "content" || admin.role === "pricing") {
+    const tree = await getCategoryTree(true);
+    const floors = new Map(tree.map((c) => [c.slug, c.marginFloorPct]));
+    const live = await db.select().from(products).where(eq(products.archived, false));
+    const review = live.filter((p) => priceCheck(p, floors.get(p.category)).needsReview).length;
     return (
       <div className="grid gap-5">
         <h1 className="text-2xl font-extrabold text-brand-dark">Dashboard</h1>
         {denied}
+        {sampleNote}
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/products/new" className="btn btn-primary">+ Add product</Link>
-          <Link href="/admin/content" className="btn btn-outline">Edit site content</Link>
+          {admin.role === "pricing" ? (
+            <Link href="/admin/pricing" className="btn btn-outline">Weekly price review ({review})</Link>
+          ) : (
+            <Link href="/admin/content" className="btn btn-outline">Edit site content</Link>
+          )}
         </div>
         <LowStock rows={lowStock} />
       </div>
@@ -56,30 +74,50 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
 
   const since = hoursAgo(24 * 30);
   const reminderDue = hoursAgo(2);
-  const [s, [newOrders], [awaiting], [newLeads], [rev], evs, outbox, unpaid] = await Promise.all([
+  const [s, [newOrders], [awaiting], [toDeliver], [newLeads], [priceMatch], [queue], [rev], evs, outbox, unpaid] = await Promise.all([
     getSettings(),
     db.select({ n: count() }).from(orders).where(eq(orders.status, "new")),
     db.select({ n: count() }).from(orders).where(eq(orders.status, "awaiting_payment")),
+    db.select({ n: count() }).from(orders).where(inArray(orders.status, ["confirmed", "scheduled", "dispatched"])),
     db.select({ n: count() }).from(leads).where(eq(leads.status, "new")),
-    db.select({ t: sql<number>`coalesce(sum(${orders.total}),0)::int` }).from(orders).where(and(gte(orders.createdAt, since), sql`${orders.status} in ('confirmed','scheduled','delivered')`)),
+    db.select({ n: count() }).from(leads).where(and(eq(leads.status, "new"), eq(leads.type, "price_match"))),
+    db.select({ n: count() }).from(reviews).where(eq(reviews.published, false)),
+    db.select({ t: sql<number>`coalesce(sum(${orders.total}),0)::int` }).from(orders).where(and(gte(orders.createdAt, since), inArray(orders.status, PAID_STATUSES))),
     db.select({ name: events.name, n: count() }).from(events).where(gte(events.createdAt, since)).groupBy(events.name),
-    db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(12),
+    db.select().from(notifications).where(ne(notifications.channel, "sms")).orderBy(desc(notifications.createdAt)).limit(12),
     db.select().from(orders).where(and(eq(orders.status, "awaiting_payment"), lt(orders.createdAt, reminderDue))).orderBy(desc(orders.createdAt)).limit(10),
   ]);
   const ev = Object.fromEntries(evs.map((e) => [e.name, e.n]));
   const stats: [string, string | number, string][] = [
     ["New orders", newOrders.n, "/admin/orders?status=new"],
     ["Awaiting payment", awaiting.n, "/admin/orders?status=awaiting_payment"],
+    ["To deliver", toDeliver.n, "/admin/orders?status=confirmed"],
     ["New leads", newLeads.n, "/admin/leads?status=new"],
+    ["Price-match requests", priceMatch.n, "/admin/leads?type=price_match"],
+    ["Reviews to approve", queue.n, "/admin/reviews"],
     ["Paid revenue (30d)", ksh(rev.t), "/admin/orders"],
+    ["Rewards sign-ups (30d)", ev.rewards_signup ?? 0, "/admin/customers?segment=members"],
     ["WhatsApp clicks (30d)", ev.whatsapp_click ?? 0, "#"],
-    ["Call clicks (30d)", ev.call_click ?? 0, "#"],
   ];
   const missing = PLACEHOLDERS.filter(([k]) => s[k] === SETTING_DEFAULTS[k]);
+  if (admin.role === "fulfilment") {
+    return (
+      <div className="grid gap-5">
+        <h1 className="text-2xl font-extrabold text-brand-dark">Dashboard</h1>
+        {denied}
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/orders?status=confirmed" className="btn btn-primary">Paid, to book ({toDeliver.n} in progress)</Link>
+          <Link href="/admin/orders?status=dispatched" className="btn btn-outline">Out for delivery</Link>
+          <Link href="/admin/messages" className="btn btn-outline">Messages to send</Link>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="grid gap-5">
       <h1 className="text-2xl font-extrabold text-brand-dark">Dashboard</h1>
       {denied}
+      {sampleNote}
       {missing.length > 0 && (
         <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
           <b>Before launch:</b> these are still placeholders: {missing.map(([, l]) => l).join(", ")}.{" "}
@@ -101,7 +139,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             {unpaid.map((o) => (
               <li key={o.id} className="flex flex-wrap justify-between gap-2 py-2">
                 <Link className="underline" href={`/admin/orders/${o.id}`}>{o.orderNumber} · {o.customerName} · {ksh(o.total)}</Link>
-                <a className="font-bold text-wa underline" target="_blank" rel="noopener noreferrer" href={waLink(o.phone, customerMessage("awaiting_payment", o, s.tillNumber))}>Send reminder</a>
+                <a className="font-bold text-wa underline" target="_blank" rel="noopener noreferrer" href={waLink(o.phone, customerMessage("awaiting_payment", o, { till: s.tillNumber }))}>Send reminder</a>
               </li>
             ))}
           </ul>
