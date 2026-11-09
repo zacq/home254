@@ -12,6 +12,8 @@
 }
 
 html { scroll-behavior: smooth; }
+/* clip (not hidden) stops sideways scrolling without breaking the sticky header */
+html, body { overflow-x: clip; max-width: 100%; }
 body { background: #f7f8f9; color: #14232b; -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid #e8590c; outline-offset: 2px; }
 

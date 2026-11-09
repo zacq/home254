@@ -290,7 +290,7 @@ export function Header({
             <span className="block text-[11px] font-medium text-slate-500">{tagline}</span>
           </span>
         </Link>
-        <div className="mx-2 hidden flex-1 md:flex"><SearchBox id={searchId} /></div>
+        <div className="mx-2 hidden min-w-0 flex-1 md:flex"><SearchBox id={searchId} /></div>
         <div className="ml-auto flex items-center gap-0.5 md:ml-0">
           <TrackedLink href={`tel:${phoneTel}`} event="call_click" className="hidden min-h-11 items-center rounded-xl px-2 text-sm font-bold text-brand hover:bg-slate-100 xl:inline-flex" label={`Call ${phoneDisplay}`}>
             📞 {phoneDisplay}
